@@ -29,24 +29,24 @@ class OwylTests(unittest.TestCase):
         """
         s = owyl.succeed()
         t = s()
-        self.assertEqual(t.next(), True)
-        self.assertRaises(StopIteration, t.next)
+        self.assertEqual(next(t), True)
+        self.assertRaises(StopIteration, next(t))
 
         t = s()
-        self.assertEqual(t.next(), True)
-        self.assertRaises(StopIteration, t.next)
+        self.assertEqual(next(t), True)
+        self.assertRaises(StopIteration, next(t))
 
     def testFail(self):
         """Can we fail?
         """
         s = owyl.fail()
         t = s()
-        self.assertEqual(t.next(), False)
-        self.assertRaises(StopIteration, t.next)
+        self.assertEqual(next(t), False)
+        self.assertRaises(StopIteration, next(t))
 
         t = s()
-        self.assertEqual(t.next(), False)
-        self.assertRaises(StopIteration, t.next)
+        self.assertEqual(next(t), False)
+        self.assertRaises(StopIteration, next(t))
 
     def testVisitSequenceSuccess(self):
         """Can we visit a successful sequence?
@@ -82,7 +82,7 @@ class OwylTests(unittest.TestCase):
 
         results = [x for x in v if x is not None]
         self.assertEqual(results, [True, True, False, False])
-        
+
     def testVisitSelectorSuccess(self):
         """Can we visit a successful selector?
         """
@@ -194,14 +194,14 @@ class OwylTests(unittest.TestCase):
                                         throws_message="AUGH!!"),
                              )
         v = owyl.visit(tree)
-        self.assertEqual(v.next(), True)
-        self.assertEqual(v.next(), True)
-        self.assertRaises(ValueError, v.next)
+        self.assertEqual(next(v), True)
+        self.assertEqual(next(v), True)
+        self.assertRaises(ValueError, next(v))
 
         v = owyl.visit(tree)
-        self.assertEqual(v.next(), True)
-        self.assertEqual(v.next(), True)
-        self.assertRaises(ValueError, v.next)
+        self.assertEqual(next(v), True)
+        self.assertEqual(next(v), True)
+        self.assertRaises(ValueError, next(v))
 
     def testCatch(self):
         """Can we catch an exception thrown within the tree?
@@ -210,18 +210,18 @@ class OwylTests(unittest.TestCase):
                              owyl.succeed(),
                              owyl.catch(owyl.throw(throws=ValueError,
                                                    throws_message="AUGH!!"),
-                                        caught=ValueError, 
+                                        caught=ValueError,
                                         branch=owyl.succeed())
                              )
         v = owyl.visit(tree)
-        self.assertEqual(v.next(), True)
-        self.assertEqual(v.next(), True)
-        self.assertEqual(v.next(), True)
+        self.assertEqual(next(v), True)
+        self.assertEqual(next(v), True)
+        self.assertEqual(next(v), True)
 
         v = owyl.visit(tree)
-        self.assertEqual(v.next(), True)
-        self.assertEqual(v.next(), True)
-        self.assertEqual(v.next(), True)
+        self.assertEqual(next(v), True)
+        self.assertEqual(next(v), True)
+        self.assertEqual(next(v), True)
 
     def testCatchIgnoresOthers(self):
         """Does catch ignore other exceptions thrown within the tree?
@@ -230,18 +230,18 @@ class OwylTests(unittest.TestCase):
                              owyl.succeed(),
                              owyl.catch(owyl.throw(throws=ValueError,
                                                    throws_message="AUGH!!"),
-                                        caught=IndexError, 
+                                        caught=IndexError,
                                         branch=owyl.succeed())
                              )
         v = owyl.visit(tree)
-        self.assertEqual(v.next(), True)
-        self.assertEqual(v.next(), True)
-        self.assertRaises(ValueError, v.next)
+        self.assertEqual(next(v), True)
+        self.assertEqual(next(v), True)
+        self.assertRaises(ValueError, next(v))
 
         v = owyl.visit(tree)
-        self.assertEqual(v.next(), True)
-        self.assertEqual(v.next(), True)
-        self.assertRaises(ValueError, v.next)
+        self.assertEqual(next(v), True)
+        self.assertEqual(next(v), True)
+        self.assertRaises(ValueError, next(v))
 
     def testIdentity(self):
         """Does identity pass on return values unchanged?
@@ -251,26 +251,26 @@ class OwylTests(unittest.TestCase):
         tree = owyl.identity(owyl.succeedAfter(after=after))
 
         v = owyl.visit(tree)
-        for x in xrange(after):
-            self.assertEqual(v.next(), None)
-        self.assertEqual(v.next(), True)
+        for x in range(after):
+            self.assertEqual(next(v), None)
+        self.assertEqual(next(v), True)
 
         v = owyl.visit(tree)
-        for x in xrange(after):
-            self.assertEqual(v.next(), None)
-        self.assertEqual(v.next(), True)
+        for x in range(after):
+            self.assertEqual(next(v), None)
+        self.assertEqual(next(v), True)
 
         tree = owyl.identity(owyl.failAfter(after=after))
 
         v = owyl.visit(tree)
-        for x in xrange(after):
-            self.assertEqual(v.next(), None)
-        self.assertEqual(v.next(), False)
+        for x in range(after):
+            self.assertEqual(next(v), None)
+        self.assertEqual(next(v), False)
 
         v = owyl.visit(tree)
-        for x in xrange(after):
-            self.assertEqual(v.next(), None)
-        self.assertEqual(v.next(), False)
+        for x in range(after):
+            self.assertEqual(next(v), None)
+        self.assertEqual(next(v), False)
 
     def testCheckBB(self):
         """Can we check a value on a blackboard?
@@ -281,24 +281,24 @@ class OwylTests(unittest.TestCase):
         bb = blackboard.Blackboard('test', value=value)
         tree = blackboard.checkBB(key='value',
                                   check=checker)
-        
+
         # Note that we can pass in the blackboard at run-time.
         v = owyl.visit(tree, blackboard=bb)
 
         # Check should succeed.
-        self.assertEqual(v.next(), True)
+        self.assertEqual(next(v), True)
 
         v = owyl.visit(tree, blackboard=bb)
-        self.assertEqual(v.next(), True)
+        self.assertEqual(next(v), True)
 
         bb['value'] = 'bar'
 
         # Check should now fail.
         v = owyl.visit(tree, blackboard=bb)
-        self.assertEqual(v.next(), False)
+        self.assertEqual(next(v), False)
 
         v = owyl.visit(tree, blackboard=bb)
-        self.assertEqual(v.next(), False)
+        self.assertEqual(next(v), False)
 
     def testSetBB(self):
         """Can we set a value on a blackboard?
@@ -312,7 +312,7 @@ class OwylTests(unittest.TestCase):
                              blackboard.checkBB(key='value',
                                                 check=checker)
                              )
-        
+
         # Note that we can pass in the blackboard at run-time.
         v = owyl.visit(tree, blackboard=bb)
 

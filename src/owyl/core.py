@@ -13,16 +13,12 @@ __revision__ = "$Rev$"[6:-2]
 __date__ = "$Date$"[7:-2]
 
 import logging
-
-try:
-    from mx.Stack import Stack, EmptyError
-except ImportError:
-    from stack import Stack, EmptyError
+from .stack import Stack,EmptyError
 
 RETURN_VALUES = set((True, False, None))
 
-__all__ = ['wrap', 'task', 'taskmethod', 'parent_task', 'parent_taskmethod', 'visit', 
-           'succeed', 'fail', 'succeedAfter', 'failAfter', 
+__all__ = ['wrap', 'task', 'taskmethod', 'parent_task', 'parent_taskmethod', 'visit',
+           'succeed', 'fail', 'succeedAfter', 'failAfter',
            'sequence', 'selector', 'parallel', 'PARALLEL_SUCCESS',
            'queue', 'parallel_queue',
            'throw', 'catch',
@@ -176,7 +172,7 @@ def visit(tree, **kwargs):
                 send_value = None
                 send_ok = False
             else:
-                child = current.next()
+                child = next(current)
 
             if child in return_values:
                 send_value = child
@@ -185,7 +181,7 @@ def visit(tree, **kwargs):
                 # Descend into child node
                 s.push(current)
                 current = child
-                
+
         except StopIteration:
             try:
                 current = s.pop()
@@ -222,7 +218,7 @@ def stall(**kwargs):
     """
     func = kwargs.pop('func')
     after = kwargs.pop('after', 1)
-    for x in xrange(after):
+    for x in range(after):
         yield None
     yield bool(func())
 
@@ -237,7 +233,7 @@ def succeedAfter(**kwargs):
     @type after: int
     """
     after = kwargs.pop('after', 1)
-    for x in xrange(after):
+    for x in range(after):
         yield None
     yield True
 
@@ -252,7 +248,7 @@ def failAfter(**kwargs):
     @type after: int
     """
     after = kwargs.pop('after', 1)
-    for x in xrange(after):
+    for x in range(after):
         yield None
     yield False
 
@@ -275,7 +271,7 @@ def sequence(*children, **kwargs):
         if not result and result is not None:
             final_value = False
             break
-        
+
     yield final_value
 
 
@@ -329,7 +325,7 @@ def parallel_queue(queue, **kwargs):
         visiting[:] = visits  # Se we can remove from visits
         for child in visiting:
             try:
-                child.next()
+                next(child)
             except StopIteration:
                 visits.remove(child)
         yield None
@@ -353,16 +349,16 @@ def selector(*children, **kwargs):
         if result:
             final_value = True
             break
-        
+
     yield final_value
 
 
 class Enum(object):
-    """Enum/namespace class. Cannot be implemented. 
+    """Enum/namespace class. Cannot be implemented.
 
     Subclass and add class variables.
     """
-    def __init__(self): 
+    def __init__(self):
         raise NotImplementedError("_Enum class object. Do not instantiate.")
 
 
@@ -388,9 +384,9 @@ def parallel(*children, **kwargs):
 
     @param children: tasks to run in parallel as children.
 
-    @keyword policy: The success policy. All must succeed, 
+    @keyword policy: The success policy. All must succeed,
                    or only one must succeed.
-    @type policy: C{PARALLEL_SUCCESS.REQUIRE_ALL} or 
+    @type policy: C{PARALLEL_SUCCESS.REQUIRE_ALL} or
                   C{PARALLEL_SUCCESS.REQUIRE_ONE}.
     """
     return_values = set((True, False))
@@ -402,7 +398,7 @@ def parallel(*children, **kwargs):
         try:
             # Run one step on each child per iteration.
             for child in visits:
-                result = child.next()
+                result = next(child)
                 if result in return_values:
                     if not result and all_must_succeed:
                         final_value = False
@@ -456,12 +452,12 @@ def catch(child, **kwargs):
     """
     caught = kwargs.pop('caught', Exception)
     branch = kwargs.pop('branch', fail())
-    
+
     result = None
     tree = visit(child, **kwargs)
     try:
         while result is None:
-            result = tree.next()
+            result = next(tree)
             yield None
     except caught:
         while result is None:
